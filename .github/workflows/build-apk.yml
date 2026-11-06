@@ -1,0 +1,63 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # 같은 서명 키를 계속 써야 폰에서 앱을 지우지 않고 업데이트 설치가 됩니다
+      - name: Restore debug keystore
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: debug-keystore
+
+      - run: npm ci
+
+      - name: Prepare Android project
+        run: |
+          if [ ! -d android ]; then npx cap add android; fi
+          npx cap sync android
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          grep -q 'screenOrientation' "$MANIFEST" || \
+            sed -i 's/android:name=".MainActivity"/android:name=".MainActivity"\n            android:screenOrientation="portrait"/' "$MANIFEST"
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - run: mv android/app/build/outputs/apk/debug/app-debug.apk block-puzzle.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: block-puzzle-apk
+          path: block-puzzle.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: 블록 퍼즐 빌드 ${{ github.run_number }}
+          body: 폰에서 아래 block-puzzle.apk 를 눌러 다운로드 후 설치하세요.
+          files: block-puzzle.apk
