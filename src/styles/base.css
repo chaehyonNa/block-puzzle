@@ -1,0 +1,57 @@
+/* 공통: 색상 변수, 기본 레이아웃, 버튼 */
+:root {
+  --bg1: #1b1f3b;
+  --bg2: #2c2560;
+  --board: #151832;
+  --empty: #23284d;
+  --text: #f3f4ff;
+  --muted: #9aa0d0;
+  --accent: #ffcf4a;
+  --bw: min(calc(100vw - 32px), 460px, calc(100vh - 290px)); /* 판 너비 */
+  --gap: 3px;
+}
+@supports (height: 100dvh) {
+  :root { --bw: min(calc(100vw - 32px), 460px, calc(100dvh - 290px)); }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overscroll-behavior: none;
+}
+body {
+  background: radial-gradient(120% 80% at 50% 0%, var(--bg2), var(--bg1));
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  overflow: hidden;
+}
+
+/* 버튼 */
+.btn {
+  display: block;
+  margin-top: 12px;
+  width: 100%;
+  padding: 14px;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1b1f3b;
+  background: var(--accent);
+  border: 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 0 #c99a1c;
+  cursor: pointer;
+}
+.btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #c99a1c; }
+.btn.sub {
+  color: var(--text);
+  background: rgba(255, 255, 255, .12);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, .25);
+}
+.btn.sub:active { box-shadow: 0 2px 0 rgba(0, 0, 0, .25); }

@@ -26,6 +26,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Build web
+        run: npm run build
+
       - name: Prepare Android project
         run: |
           if [ ! -d android ]; then npx cap add android; fi

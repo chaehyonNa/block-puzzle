@@ -1,5 +1,5 @@
 {
   "appId": "com.skcogus.blockpuzzle",
   "appName": "블록 퍼즐",
-  "webDir": "www"
+  "webDir": "dist"
 }
