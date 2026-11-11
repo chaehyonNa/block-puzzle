@@ -10,6 +10,8 @@ import { createTrayView } from './ui/trayView.js';
 import { createHud } from './ui/hud.js';
 import { setupDrag } from './ui/drag.js';
 import { showScorePopup } from './ui/effects.js';
+import { unlockAudio, playLineClear } from './feedback/sound.js';
+import { vibrateLineClear } from './feedback/vibration.js';
 import { createTitleScreen } from './screens/title.js';
 import { createPauseScreen } from './screens/pause.js';
 import { createGameOverScreen } from './screens/gameOver.js';
@@ -39,8 +41,15 @@ const pause = createPauseScreen({
   resumeBtn: $('resume'),
   restartBtn: $('pauseRestart'),
   homeBtn: $('pauseHome'),
+  toggles: { sound: $('soundToggle'), vibration: $('vibrationToggle') },
   onRestart: newGame,
   onHome: goHome,
+  // 켤 때 미리 들어/느껴볼 수 있게 한 번 재생
+  onToggle: (key, on) => {
+    if (!on) return;
+    if (key === 'sound') playLineClear(1);
+    if (key === 'vibration') vibrateLineClear(1);
+  },
 });
 
 const gameOver = createGameOverScreen({
@@ -102,6 +111,8 @@ function handleDrop(i, r, c) {
   if (result.lines > 0) {
     board.playClear(result.cleared);
     showScorePopup(boardWrap, result.lineScore, result.lines);
+    playLineClear(result.lines);
+    vibrateLineClear(result.lines);
   }
   hud.update(state.score, state.best, true);
   refreshTray();
@@ -120,6 +131,8 @@ $('pauseBtn').addEventListener('click', () => {
   if (drag.isDragging() || state.over) return;
   pause.show();
 });
+// 첫 터치 때 오디오 준비 (브라우저/앱 자동재생 제한 때문)
+window.addEventListener('pointerdown', unlockAudio, { capture: true });
 document.addEventListener('contextmenu', e => e.preventDefault());
 window.addEventListener('resize', () => {
   if (!drag.isDragging()) refreshTray();
