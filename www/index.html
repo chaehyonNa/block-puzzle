@@ -145,7 +145,7 @@
   .ghost > div { position: absolute; border-radius: 5px; }
 
   /* ---- 게임 오버 ---- */
-  #over {
+  #over, #pause {
     position: fixed; inset: 0;
     background: rgba(10, 12, 30, .75);
     backdrop-filter: blur(4px);
@@ -168,26 +168,99 @@
   .over-card .val { font-size: 44px; font-weight: 800; margin-bottom: 10px; }
   .over-card .val.small { font-size: 26px; color: var(--accent); }
   .newbest { color: var(--accent); font-weight: 800; margin-bottom: 8px; }
-  #restart {
-    margin-top: 10px;
+  .btn {
+    display: block;
+    margin-top: 12px;
     width: 100%;
     padding: 14px;
-    font-size: 18px; font-weight: 800;
+    font: inherit; font-size: 18px; font-weight: 800;
     color: #1b1f3b;
     background: var(--accent);
     border: 0; border-radius: 12px;
     box-shadow: 0 4px 0 #c99a1c;
     cursor: pointer;
   }
-  #restart:active { transform: translateY(2px); box-shadow: 0 2px 0 #c99a1c; }
+  .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #c99a1c; }
+  .btn.sub {
+    color: var(--text);
+    background: rgba(255,255,255,.12);
+    box-shadow: 0 4px 0 rgba(0,0,0,.25);
+  }
+  .btn.sub:active { box-shadow: 0 2px 0 rgba(0,0,0,.25); }
+
+  /* ---- 상단 바 (최고 점수 + 일시정지) ---- */
+  .topbar { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  #pauseBtn {
+    width: 40px; height: 40px;
+    border: 0; border-radius: 10px;
+    background: rgba(255,255,255,.1);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  #pauseBtn svg { width: 20px; height: 20px; fill: var(--text); }
+  #pauseBtn:active { transform: scale(.94); }
+
+  /* ---- 시작 화면 ---- */
+  #title {
+    position: fixed; inset: 0;
+    z-index: 200;
+    background: radial-gradient(120% 80% at 50% 0%, var(--bg2), var(--bg1));
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: calc(env(safe-area-inset-top, 0px) + 24px) 24px calc(env(safe-area-inset-bottom, 0px) + 24px);
+    text-align: center;
+  }
+  #title.leaving { animation: leave .35s ease-in forwards; }
+  @keyframes leave { to { opacity: 0; transform: scale(1.06); } }
+  .logo {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    width: min(62vw, 240px);
+    margin-bottom: 28px;
+  }
+  .logo > div { aspect-ratio: 1; border-radius: 7px; }
+  .logo > .on {
+    background: var(--c);
+    box-shadow: inset 0 4px 0 rgba(255,255,255,.35), inset 0 -5px 0 rgba(0,0,0,.25);
+    animation: drop .5s cubic-bezier(.3,1.5,.6,1) backwards, bob 2.4s ease-in-out infinite;
+  }
+  @keyframes drop { from { transform: translateY(-120px); opacity: 0; } }
+  @keyframes bob { 50% { transform: translateY(-4px); } }
+  .title-name {
+    margin: 0;
+    font-size: clamp(40px, 13vw, 60px);
+    font-weight: 900;
+    letter-spacing: -1px;
+    text-shadow: 0 4px 0 rgba(0,0,0,.35);
+  }
+  .title-sub { color: var(--muted); margin: 6px 0 26px; font-size: 15px; }
+  .title-best {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(0,0,0,.25);
+    color: var(--accent);
+    font-weight: 800; font-size: 18px;
+    margin-bottom: 28px;
+  }
+  .title-best svg { width: 20px; height: 20px; fill: var(--accent); }
+  .title-actions { width: min(100%, 280px); }
+  #startBtn { font-size: 22px; padding: 18px; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.04); } }
+  .title-help { margin-top: 26px; color: var(--muted); font-size: 13px; line-height: 1.6; }
 </style>
 </head>
 <body>
 <div id="app">
   <header>
-    <div class="best">
-      <svg viewBox="0 0 24 24"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-2 12H5L3 7z"/></svg>
-      <span id="best">0</span>
+    <div class="topbar">
+      <div class="best">
+        <svg viewBox="0 0 24 24"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-2 12H5L3 7z"/></svg>
+        <span id="best">0</span>
+      </div>
+      <button id="pauseBtn" aria-label="일시정지">
+        <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+      </button>
     </div>
     <div class="score" id="score">0</div>
   </header>
@@ -211,8 +284,32 @@
     <div class="val" id="finalScore">0</div>
     <div class="label">최고 점수</div>
     <div class="val small" id="finalBest">0</div>
-    <button id="restart">다시하기</button>
+    <button class="btn" id="restart">다시하기</button>
+    <button class="btn sub" id="overHome">처음 화면</button>
   </div>
+</div>
+
+<div id="pause" hidden>
+  <div class="over-card">
+    <h2>일시정지</h2>
+    <button class="btn" id="resume">계속하기</button>
+    <button class="btn sub" id="pauseRestart">처음부터 다시</button>
+    <button class="btn sub" id="pauseHome">처음 화면</button>
+  </div>
+</div>
+
+<div id="title">
+  <div class="logo" id="logo"></div>
+  <h1 class="title-name">블록 퍼즐</h1>
+  <p class="title-sub">블록을 채우고 줄을 지워라!</p>
+  <div class="title-best">
+    <svg viewBox="0 0 24 24"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-2 12H5L3 7z"/></svg>
+    최고 점수 <span id="titleBest">0</span>
+  </div>
+  <div class="title-actions">
+    <button class="btn" id="startBtn">게임 시작</button>
+  </div>
+  <p class="title-help">블록을 끌어서 판에 놓으세요<br>가로·세로 줄을 채우면 사라져요</p>
 </div>
 
 <script>
@@ -406,11 +503,12 @@
     const left = pieces.filter(Boolean);
     if (left.length && !left.some(fitsAnywhere)) {
       gameOver = true;
-      setTimeout(showGameOver, 700);
+      const id = gameId;
+      setTimeout(() => { if (id === gameId && titleEl.hidden) showGameOver(); }, 700);
     }
   }
 
-  let startBest = 0;
+  let startBest = 0, gameId = 0;
   function showGameOver() {
     document.getElementById('finalScore').textContent = score;
     document.getElementById('finalBest').textContent = best;
@@ -419,6 +517,7 @@
   }
 
   function newGame() {
+    gameId++;
     grid = Array.from({ length: N }, () => Array(N).fill(null));
     score = 0;
     gameOver = false;
@@ -426,6 +525,7 @@
     scoreEl.textContent = 0;
     bestEl.textContent = best;
     overEl.hidden = true;
+    pauseEl.hidden = true;
     deal();
     render();
     renderTray();
@@ -572,12 +672,67 @@
   }
 
   // ---------- 기타 ----------
-  document.getElementById('restart').addEventListener('click', newGame);
+  // ---------- 시작 화면 / 일시정지 ----------
+  const titleEl = document.getElementById('title');
+  const pauseEl = document.getElementById('pause');
+  const $ = id => document.getElementById(id);
+
+  function buildLogo() {
+    // 5x5 장식용 블록 그림 (0 = 빈칸, 숫자 = COLORS 인덱스 + 1)
+    const pattern = [
+      1, 1, 0, 5, 5,
+      1, 0, 0, 0, 5,
+      0, 0, 3, 0, 0,
+      7, 0, 3, 3, 4,
+      7, 7, 0, 4, 4,
+    ];
+    const logo = $('logo');
+    logo.innerHTML = '';
+    let n = 0;
+    pattern.forEach(v => {
+      const d = document.createElement('div');
+      if (v) {
+        d.className = 'on';
+        d.style.setProperty('--c', COLORS[v - 1]);
+        const delay = (n++ * 0.06).toFixed(2);
+        d.style.animationDelay = `${delay}s, ${(0.6 + n * 0.12).toFixed(2)}s`;
+      }
+      logo.appendChild(d);
+    });
+  }
+
+  function showTitle() {
+    $('titleBest').textContent = best;
+    overEl.hidden = true;
+    pauseEl.hidden = true;
+    titleEl.classList.remove('leaving');
+    titleEl.hidden = false;
+    buildLogo();
+  }
+
+  function startGame() {
+    newGame();
+    titleEl.classList.add('leaving');
+    setTimeout(() => { titleEl.hidden = true; titleEl.classList.remove('leaving'); }, 340);
+  }
+
+  $('startBtn').addEventListener('click', startGame);
+  $('restart').addEventListener('click', newGame);
+  $('overHome').addEventListener('click', showTitle);
+  $('pauseBtn').addEventListener('click', () => {
+    if (drag || gameOver) return;
+    pauseEl.hidden = false;
+  });
+  $('resume').addEventListener('click', () => { pauseEl.hidden = true; });
+  $('pauseRestart').addEventListener('click', newGame);
+  $('pauseHome').addEventListener('click', showTitle);
+
   document.addEventListener('contextmenu', e => e.preventDefault());
   window.addEventListener('resize', () => { if (!drag && pieces) renderTray(); });
 
   loadBest();
   newGame();
+  showTitle();
 })();
 </script>
 </body>
