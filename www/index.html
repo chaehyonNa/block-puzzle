@@ -403,10 +403,16 @@
   }
   const cellAt = (r, c) => cellEls[r * N + c];
 
+  // 칸 크기 측정: 애니메이션(scale) 영향을 받지 않도록 offset 값(레이아웃 크기)을 사용
   function metrics() {
-    const a = cellEls[0].getBoundingClientRect();
-    const b = cellEls[1].getBoundingClientRect();
-    return { ox: a.left, oy: a.top, cell: a.width, step: b.left - a.left };
+    const a = cellEls[0], b = cellEls[1];
+    const wrap = boardWrap.getBoundingClientRect();
+    return {
+      ox: wrap.left + a.offsetLeft,
+      oy: wrap.top + a.offsetTop,
+      cell: a.offsetWidth,
+      step: b.offsetLeft - a.offsetLeft,
+    };
   }
 
   // ---------- 로직 ----------
