@@ -1,9 +1,12 @@
-name: Build AAB
+name: Build & Release
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -41,22 +44,33 @@ jobs:
           if [ -z "$KEYSTORE_BASE64" ]; then echo "::error::GitHub Secrets 에 KEYSTORE_BASE64 가 없습니다"; exit 1; fi
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
 
-      - name: Build signed release AAB
+      - name: Build signed release APK + AAB
         working-directory: android
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
           chmod +x gradlew
-          ./gradlew bundleRelease \
+          ./gradlew assembleRelease bundleRelease \
             -Pandroid.injected.signing.store.file="$RUNNER_TEMP/upload.jks" \
             -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEYSTORE_PASSWORD"
 
-      - run: mv android/app/build/outputs/bundle/release/app-release.aab block-puzzle-${{ github.run_number }}.aab
+      - name: Collect outputs
+        run: |
+          mv android/app/build/outputs/apk/release/app-release.apk block-puzzle.apk
+          mv android/app/build/outputs/bundle/release/app-release.aab block-puzzle.aab
 
-      - uses: actions/upload-artifact@v4
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
         with:
-          name: block-puzzle-aab-${{ github.run_number }}
-          path: block-puzzle-${{ github.run_number }}.aab
+          tag_name: build-${{ github.run_number }}
+          name: 블록 퍼즐 1.0.${{ github.run_number }}
+          make_latest: true
+          body: |
+            📱 폰 설치: 아래 **block-puzzle.apk** 를 눌러 다운로드 후 설치
+            🏪 Play 스토어 업로드용: **block-puzzle.aab**
+          files: |
+            block-puzzle.apk
+            block-puzzle.aab
